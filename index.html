@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Human Agency 500</title>
+<style>
+  :root {
+    --track-green: #3aa655;
+    --track-dark: #2d8244;
+    --road: #4a4a52;
+    --road-line: #f2e94e;
+    --sky: #7ec8e3;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, var(--sky) 0%, #bde6f0 40%, var(--track-green) 40%, var(--track-dark) 100%);
+    font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkboard SE', Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 10px 60px;
+    overflow-x: hidden;
+  }
+
+  h1 {
+    color: #fff;
+    text-shadow: 3px 3px 0 #d1495b, -1px -1px 0 #222;
+    font-size: clamp(28px, 5vw, 48px);
+    letter-spacing: 2px;
+    margin: 10px 0 4px;
+    text-align: center;
+  }
+
+  .subtitle {
+    color: #fffbe7;
+    font-size: clamp(13px, 2vw, 16px);
+    margin-bottom: 14px;
+    text-align: center;
+    text-shadow: 1px 1px 0 #333;
+  }
+
+  #startBtn, #resetBtn {
+    font-family: inherit;
+    font-size: clamp(20px, 3vw, 28px);
+    font-weight: bold;
+    padding: 16px 46px;
+    border-radius: 50px;
+    border: 4px solid #222;
+    cursor: pointer;
+    color: #fff;
+    background: linear-gradient(180deg, #ff5e5e, #d1495b);
+    box-shadow: 0 6px 0 #8f1f30, 0 8px 14px rgba(0,0,0,0.4);
+    transition: transform 0.08s ease;
+    margin-bottom: 18px;
+    z-index: 20;
+  }
+
+  #startBtn:active, #resetBtn:active {
+    transform: translateY(6px);
+    box-shadow: 0 0 0 #8f1f30, 0 2px 6px rgba(0,0,0,0.4);
+  }
+
+  #startBtn:disabled {
+    opacity: 0.5;
+    cursor: default;
+    transform: none;
+  }
+
+  #resetBtn {
+    background: linear-gradient(180deg, #5ec4ff, #2b8fd1);
+    box-shadow: 0 6px 0 #1a5c88, 0 8px 14px rgba(0,0,0,0.4);
+    margin-top: 18px;
+    font-size: clamp(17px, 2.4vw, 22px);
+    padding: 12px 34px;
+  }
+
+  .track-wrap {
+    position: relative;
+    width: min(920px, 96vw);
+    background: var(--track-dark);
+    border: 6px solid #234d2f;
+    border-radius: 24px;
+    padding: 14px;
+    box-shadow: 0 12px 0 rgba(0,0,0,0.25), inset 0 0 0 4px #1d3d26;
+  }
+
+  #track {
+    position: relative;
+    width: 100%;
+    height: 480px;
+    background: repeating-linear-gradient(
+        90deg,
+        var(--road) 0px, var(--road) 78px,
+        #444449 78px, #444449 82px
+      );
+    border-radius: 14px;
+    overflow: hidden;
+    border: 3px dashed #ffe98a;
+  }
+
+  .grass-tuft {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: #2f9e4f;
+    border-radius: 50%;
+    opacity: 0.5;
+  }
+
+  .lane-bg {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 20%;
+  }
+
+  .start-line, .finish-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 22px;
+    background-image: repeating-linear-gradient(
+      45deg,
+      #fff 0 10px,
+      #222 10px 20px
+    );
+    background-size: 22px 22px;
+    z-index: 2;
+  }
+
+  .start-line { left: 40px; }
+  .finish-line { right: 40px; }
+
+  .finish-flag-label {
+    position: absolute;
+    top: -30px;
+    right: 14px;
+    font-size: 22px;
+    z-index: 3;
+  }
+
+  .lane {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 20%;
+    display: flex;
+    align-items: center;
+  }
+
+  .lane:nth-child(1) { top: 0%; }
+
+  .car {
+    position: absolute;
+    left: 40px;
+    width: 96px;
+    height: 72px;
+    transform: translateX(0) translateY(-50%);
+    top: 50%;
+    z-index: 5;
+    will-change: transform;
+  }
+
+  .car-body {
+    position: absolute;
+    top: 34px;
+    left: 2px;
+    width: 92px;
+    height: 34px;
+    border-radius: 18px 26px 14px 14px;
+    border: 3px solid rgba(0,0,0,0.55);
+    box-shadow: 0 4px 0 rgba(0,0,0,0.3), 0 6px 6px rgba(0,0,0,0.3);
+  }
+
+  .car-body::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 22px;
+    width: 30px;
+    height: 16px;
+    background: #bfe9ff;
+    border: 3px solid rgba(0,0,0,0.55);
+    border-radius: 10px 10px 4px 4px;
+  }
+
+  .car-name {
+    position: absolute;
+    top: 9px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    letter-spacing: 0.3px;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .wheel {
+    position: absolute;
+    bottom: -2px;
+    width: 16px;
+    height: 16px;
+    background: #222;
+    border-radius: 50%;
+    border: 2px solid #000;
+  }
+  .wheel.front { left: 10px; }
+  .wheel.back { right: 10px; }
+
+  .spoiler {
+    position: absolute;
+    bottom: 8px;
+    right: -4px;
+    width: 8px;
+    height: 22px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 3px;
+  }
+
+  .driver {
+    position: absolute;
+    top: 0;
+    left: 28px;
+    width: 36px;
+    height: 36px;
+    z-index: 6;
+    transform-origin: bottom center;
+  }
+
+  .driver-head {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 3px solid #222;
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+  }
+
+  @keyframes wobble {
+    0%, 100% { transform: rotate(-8deg) translateY(0); }
+    50% { transform: rotate(8deg) translateY(-3px); }
+  }
+
+  @keyframes bodyBounce {
+    0%, 100% { transform: translateY(-50%) translateY(0) rotate(0deg); }
+    25% { transform: translateY(-50%) translateY(-4px) rotate(-1.5deg); }
+    50% { transform: translateY(-50%) translateY(0) rotate(0deg); }
+    75% { transform: translateY(-50%) translateY(-4px) rotate(1.5deg); }
+  }
+
+  .car.racing .driver { animation: wobble 0.28s ease-in-out infinite; }
+  .car.racing .car-body-wrap { animation: bodyBounce 0.32s ease-in-out infinite; }
+
+  .car-body-wrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  #announcement {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20, 20, 30, 0.55);
+    z-index: 100;
+  }
+
+  #announcement.show { display: flex; }
+
+  .winner-card {
+    background: linear-gradient(160deg, #fff6d8, #ffe38a);
+    border: 6px solid #222;
+    border-radius: 26px;
+    padding: 34px 50px;
+    text-align: center;
+    box-shadow: 0 14px 0 rgba(0,0,0,0.3);
+    transform: scale(0);
+    animation: popIn 0.5s cubic-bezier(.34,1.56,.64,1) forwards;
+    max-width: 90vw;
+  }
+
+  @keyframes popIn {
+    to { transform: scale(1); }
+  }
+
+  .winner-card img {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: 5px solid #222;
+    margin-bottom: 12px;
+    box-shadow: 0 6px 10px rgba(0,0,0,0.3);
+  }
+
+  .winner-card h2 {
+    margin: 6px 0 0;
+    font-size: clamp(26px, 4vw, 40px);
+    color: #d1495b;
+    text-shadow: 2px 2px 0 #222;
+  }
+
+  .winner-card .trophy {
+    font-size: 46px;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .winner-card p {
+    margin: 10px 0 0;
+    font-size: 16px;
+    color: #444;
+  }
+
+  canvas#confetti {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 110;
+  }
+
+  footer {
+    margin-top: 22px;
+    color: #fffbe7;
+    font-size: 13px;
+    text-align: center;
+    max-width: 640px;
+    text-shadow: 1px 1px 0 #222;
+    line-height: 1.5;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>🏁 The Human Agency 500 🏁</h1>
+<div class="subtitle">Five drivers. One track. Purely random glory.</div>
+
+<div class="btn-row">
+  <button id="startBtn">Start Race</button>
+</div>
+
+<div class="track-wrap">
+  <div id="track">
+    <div class="start-line"></div>
+    <div class="finish-line"></div>
+    <div class="finish-flag-label">🏁</div>
+    <!-- Lanes / cars injected by JS -->
+  </div>
+</div>
+
+<footer>
+  Built with AI (and a little too much enthusiasm) by Ted Harrar for the Human Agency team &mdash;
+  a small, silly demo submitted for the Venture Executive role. Hope it makes you smile.
+</footer>
+
+<div id="announcement">
+  <div class="winner-card">
+    <span class="trophy">🏆</span>
+    <img id="winnerImg" src="" alt="Winner">
+    <h2 id="winnerName"></h2>
+    <p>crosses the line first. Confetti has been deployed.</p>
+    <button id="resetBtn">Race Again</button>
+  </div>
+</div>
+
+<canvas id="confetti"></canvas>
+
+<script>
+(function () {
+  const drivers = [
+    { name: 'Caroline', img: 'assets/caroline.png', color: '#ff5e5e' },
+    { name: 'Brendan',  img: 'assets/brendan.png',  color: '#5ec4ff' },
+    { name: 'Peter',    img: 'assets/peter.png',    color: '#ffd23f' },
+    { name: 'Emily',    img: 'assets/emily.png',    color: '#9b5de5' },
+    { name: 'Andrew',   img: 'assets/andrew.png',   color: '#5df29b' }
+  ];
+
+  const track = document.getElementById('track');
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const announcement = document.getElementById('announcement');
+  const winnerImg = document.getElementById('winnerImg');
+  const winnerName = document.getElementById('winnerName');
+
+  const LANE_COUNT = drivers.length;
+  const RACE_MS = 8500;
+  let carEls = [];
+  let raceRunning = false;
+
+  function buildTrack() {
+    track.querySelectorAll('.lane, .car').forEach(el => el.remove());
+
+    // scattered grass tufts for texture along the edges (decorative only)
+    track.querySelectorAll('.grass-tuft').forEach(el => el.remove());
+
+    carEls = [];
+
+    drivers.forEach((driver, i) => {
+      const lane = document.createElement('div');
+      lane.className = 'lane';
+      lane.style.top = (i * (100 / LANE_COUNT)) + '%';
+      lane.style.height = (100 / LANE_COUNT) + '%';
+
+      const car = document.createElement('div');
+      car.className = 'car';
+      car.style.left = '40px';
+
+      car.innerHTML = `
+        <div class="driver">
+          <div class="driver-head" style="background-image:url('${driver.img}')"></div>
+        </div>
+        <div class="car-body-wrap">
+          <div class="car-body" style="background:${driver.color}">
+            <div class="car-name">${driver.name}</div>
+            <div class="wheel front"></div>
+            <div class="wheel back"></div>
+            <div class="spoiler"></div>
+          </div>
+        </div>
+      `;
+
+      lane.appendChild(car);
+      track.appendChild(lane);
+      carEls.push(car);
+    });
+  }
+
+  function trackWidth() {
+    return track.clientWidth;
+  }
+
+  function raceDistance() {
+    // distance from start line to finish line, minus car width
+    return trackWidth() - 40 - 40 - 92;
+  }
+
+  function runRace() {
+    if (raceRunning) return;
+    raceRunning = true;
+    startBtn.disabled = true;
+
+    const distance = raceDistance();
+
+    // Assign genuinely random finish times per car, all within RACE_MS window.
+    const order = drivers.map((_, i) => i);
+    // Fisher-Yates shuffle for true randomness of finishing order
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+
+    // Base finish times spread out (place 0 = fastest), then add jitter so it never feels scripted.
+    const finishTimes = new Array(LANE_COUNT);
+    order.forEach((carIndex, place) => {
+      const base = 2600 + place * (600 + Math.random() * 500);
+      const jitter = (Math.random() - 0.5) * 300;
+      finishTimes[carIndex] = Math.min(RACE_MS - 300, Math.max(2600, base + jitter));
+    });
+
+    // Winner is derived directly from whichever car actually has the shortest finish time,
+    // so the announcement always matches the car that visually crosses the line first.
+    let winnerIndex = 0;
+    for (let i = 1; i < finishTimes.length; i++) {
+      if (finishTimes[i] < finishTimes[winnerIndex]) winnerIndex = i;
+    }
+
+    carEls.forEach((car, i) => {
+      car.classList.add('racing');
+      const duration = finishTimes[i];
+
+      // Give each car a slightly wobbly, non-linear path using multiple keyframes
+      // via Web Animations API so movement looks bouncy rather than linear.
+      const wobbleY = (Math.random() * 6 - 3);
+      car.animate([
+        { transform: `translateY(-50%) translateX(0px)` , offset: 0 },
+        { transform: `translateY(calc(-50% + ${wobbleY}px)) translateX(${distance * 0.3}px)`, offset: 0.3 },
+        { transform: `translateY(-50%) translateX(${distance * 0.6}px)`, offset: 0.6 },
+        { transform: `translateY(calc(-50% + ${-wobbleY}px)) translateX(${distance * 0.85}px)`, offset: 0.85 },
+        { transform: `translateY(-50%) translateX(${distance}px)`, offset: 1 }
+      ], {
+        duration: duration,
+        easing: 'cubic-bezier(0.45, 0, 0.55, 1)',
+        fill: 'forwards'
+      });
+    });
+
+    const maxFinish = Math.max(...finishTimes);
+
+    setTimeout(() => {
+      carEls.forEach(car => car.classList.remove('racing'));
+      showWinner(winnerIndex);
+      raceRunning = false;
+    }, maxFinish + 250);
+  }
+
+  function showWinner(index) {
+    const driver = drivers[index];
+    winnerImg.src = driver.img;
+    winnerImg.alt = driver.name;
+    winnerName.textContent = driver.name + ' wins!';
+    announcement.classList.add('show');
+    launchConfetti();
+  }
+
+  function resetRace() {
+    announcement.classList.remove('show');
+    startBtn.disabled = false;
+    buildTrack();
+  }
+
+  startBtn.addEventListener('click', runRace);
+  resetBtn.addEventListener('click', resetRace);
+
+  window.addEventListener('resize', () => {
+    if (!raceRunning) buildTrack();
+  });
+
+  buildTrack();
+
+  // --- Confetti ---
+  const canvas = document.getElementById('confetti');
+  const ctx = canvas.getContext('2d');
+  let confettiPieces = [];
+  let confettiRAF = null;
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  const confettiColors = ['#ff5e5e', '#5ec4ff', '#ffd23f', '#9b5de5', '#5df29b', '#ff9f1c'];
+
+  function launchConfetti() {
+    confettiPieces = [];
+    const count = 160;
+    for (let i = 0; i < count; i++) {
+      confettiPieces.push({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.5,
+        w: 6 + Math.random() * 6,
+        h: 8 + Math.random() * 10,
+        color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+        speed: 2 + Math.random() * 3,
+        drift: (Math.random() - 0.5) * 2,
+        rot: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.3
+      });
+    }
+    if (confettiRAF) cancelAnimationFrame(confettiRAF);
+    const startTime = performance.now();
+    function animateConfetti(now) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const elapsed = now - startTime;
+      let anyVisible = false;
+      confettiPieces.forEach(p => {
+        p.y += p.speed;
+        p.x += p.drift;
+        p.rot += p.rotSpeed;
+        if (p.y < canvas.height + 20) anyVisible = true;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+      if (anyVisible && elapsed < 6000) {
+        confettiRAF = requestAnimationFrame(animateConfetti);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+    confettiRAF = requestAnimationFrame(animateConfetti);
+  }
+})();
+</script>
+
+</body>
+</html>
